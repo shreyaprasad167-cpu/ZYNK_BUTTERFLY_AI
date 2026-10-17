@@ -1,0 +1,8 @@
+# Mac/development environment. Keep scikit-learn aligned with the saved model.
+fastapi==0.143.2
+uvicorn==0.54.0
+python-dotenv==1.2.4
+supabase==2.33.0
+pandas==3.0.6
+joblib==1.6.0
+scikit-learn==1.9.0
