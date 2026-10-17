@@ -1,0 +1,7 @@
+# LinuxONE s390x Python packages installed in the working api-venv.
+# numpy, pandas, scipy, scikit-learn, and joblib come from Ubuntu apt packages;
+# see the LinuxONE setup section in README.md.
+fastapi==0.143.3
+uvicorn==0.54.0
+python-dotenv==1.2.4
+supabase==2.33.0
