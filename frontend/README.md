@@ -1,6 +1,6 @@
 # Butterfly AI frontend
 
-A Streamlit city-systems dashboard for the existing Butterfly AI FastAPI backend. The welcome screen uses a quiet night-sky treatment, an animated butterfly, and a letter-by-letter “butterfly ai” reveal. It opens into a neighbourhood-first Bengaluru map, followed by a simple commute scenario and the resulting model estimate and ripple. The copy and layout aim to feel like a thoughtful city guide rather than a generic AI console.
+A Streamlit city-systems dashboard for the existing Butterfly AI FastAPI backend. The welcome screen uses a quiet night-sky treatment, an animated butterfly, and a letter-by-letter “BUTTERFLY AI” reveal. It opens into a neighbourhood-first Bengaluru map, followed by a simple commute scenario and the resulting model estimate and ripple. The copy and layout aim to feel like a thoughtful city guide rather than a generic AI console.
 
 `preview.html` demonstrates the welcome transition and dashboard layout. Its map uses interactive dark OpenFreeMap street tiles with all 25 CSV neighbourhood markers; you can drag, zoom, search, and open marker details. The preview's simulation remains visual only. Run `app.py` for the live map selection and backend predictions. The map style is from OpenFreeMap, based on OpenStreetMap, and does not require a Google Maps or CARTO API key. Map tiles require an internet connection.
 
