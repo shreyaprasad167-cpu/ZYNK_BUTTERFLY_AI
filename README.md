@@ -1,24 +1,94 @@
-# Butterfly AI backend
+# Butterfly AI
 
-FastAPI service with the existing Supabase scenario routes and the `/predict` route.
+Butterfly AI is a prototype for exploring how a transport scenario can affect estimated Bengaluru congestion and related city systems. It includes a FastAPI prediction backend and a Streamlit dashboard with an interactive dark map.
 
-## Local development (Mac)
+## What you need
 
-Use Python 3.13 and the matching dependencies in `requirements.txt`:
+- Git, or download this repository as a ZIP.
+- Python 3.13 recommended for the pinned backend model dependencies.
+- Internet access for installing packages and loading the OpenFreeMap map tiles.
+- The model file `butterfly_model.joblib`, included in this repository.
+
+No Google Maps API key is needed. The dashboard map uses OpenFreeMap tiles.
+
+## Get the project
+
+Using Git:
+
+```bash
+git clone https://github.com/shreyaprasad167-cpu/ZYNK_BUTTERFLY_AI.git
+cd ZYNK_BUTTERFLY_AI
+```
+
+Or on GitHub, select **Code → Download ZIP**, extract it, then open a terminal in the extracted `ZYNK_BUTTERFLY_AI` folder.
+
+## Run the whole project locally
+
+Run the backend and dashboard in two separate terminal windows. Keep both running while you use the app.
+
+### macOS
+
+In Terminal window 1, from the project folder:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
+python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
-cp .env.example .env
-uvicorn main:app --reload
+uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Open `http://127.0.0.1:8000/docs` to try the API. Supabase routes require valid `SUPABASE_URL` and `SUPABASE_KEY` values in `.env`; prediction loads `butterfly_model.joblib` from this folder by default.
+In Terminal window 2, from the same project folder:
 
-## LinuxONE (s390x)
+```bash
+source .venv/bin/activate
+export BUTTERFLY_API_URL=http://127.0.0.1:8000
+python -m pip install -r frontend/requirements.txt
+streamlit run frontend/app.py
+```
 
-The currently working LinuxONE virtual environment uses Ubuntu's architecture-compatible scientific Python packages. On a new Ubuntu host, install them and create a virtual environment with access to those system packages:
+### Windows (PowerShell)
+
+Open PowerShell in the project folder. In terminal window 1:
+
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
+```
+
+If PowerShell blocks environment activation, run this once in that PowerShell window, then activate the environment again:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+```
+
+Open a second PowerShell window in the project folder:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+$env:BUTTERFLY_API_URL = "http://127.0.0.1:8000"
+python -m pip install -r frontend/requirements.txt
+python -m streamlit run frontend/app.py
+```
+
+Open the Streamlit URL printed in the terminal, usually **http://localhost:8501**. The backend API documentation is at **http://127.0.0.1:8000/docs**.
+
+### Using the dashboard
+
+1. Choose one of the 25 listed areas on the map or in the area selector.
+2. Adjust the scenario slider.
+3. Select **Run the ripple simulation**.
+4. Review the baseline and scenario congestion estimates and the signed ripple cards.
+
+The frontend calls the backend at `BUTTERFLY_API_URL`. The local instructions set this to port 8000. If you change the backend port, set this variable to the matching address.
+
+## Optional: run the backend on IBM LinuxONE
+
+This is for people who have access to an IBM LinuxONE Ubuntu host. On that host, clone the project (or copy the repository files, including `main.py` and `butterfly_model.joblib`) and run from its project folder:
 
 ```bash
 sudo apt update
@@ -29,25 +99,46 @@ python -m pip install -r requirements-linuxone.txt
 uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
-The committed model was saved with scikit-learn 1.9.0. The current LinuxONE package is scikit-learn 1.4.1.post1; it emitted compatibility warnings but the smoke prediction succeeded. Re-train/export the pipeline with the same scikit-learn version used by the serving environment and the verified training dataset before treating model outputs as production-ready. The CSV supplied with this task identifies its rows as `synthetic` and says they are illustrative, so it is not suitable evidence for real-zone accuracy.
-
-## Frontend integration
-
-The Streamlit frontend is in `frontend/` and calls the existing FastAPI `POST /predict` route from the Streamlit server. It sends the baseline and scenario feature rows, compares the two congestion predictions, and applies the signed ripple graph in the frontend. Since the API request is server-to-server, this Streamlit setup does not need browser CORS configuration.
-
-To run the frontend on your Mac while FastAPI runs on LinuxONE, keep the SSH tunnel to local port 8001 open, then run:
+To use that private backend from a Mac, keep the backend running. In a second Mac Terminal window, create an SSH tunnel (replace the placeholders with the host, username, and private-key path supplied to you by your LinuxONE administrator):
 
 ```bash
-python3 -m venv frontend/.venv
-source frontend/.venv/bin/activate
+ssh -i ~/path/to/private-key.pem -N -L 8001:127.0.0.1:8000 username@linuxone-host
+```
+
+Leave the tunnel terminal open. In another Mac terminal, from the project folder, start the frontend:
+
+```bash
+source .venv/bin/activate
+export BUTTERFLY_API_URL=http://127.0.0.1:8001
 python -m pip install -r frontend/requirements.txt
 streamlit run frontend/app.py
 ```
 
-The frontend defaults to `http://127.0.0.1:8001`, matching the Mac SSH tunnel forwarding to LinuxONE port 8000. If Streamlit runs on LinuxONE beside FastAPI, set `BUTTERFLY_API_URL=http://127.0.0.1:8000`. For any other host, configure `BUTTERFLY_API_URL` to the backend's reachable address; the local SSH tunnel is private to the Mac where it runs. The map uses OpenFreeMap dark tiles and requires internet access, but no map API key.
+For Windows, open PowerShell and use the Windows path to your private key:
 
-The supplied 25-area CSV is marked synthetic and illustrative. Do not present its scores as verified Bengaluru measurements.
+```powershell
+ssh -i "$HOME\Downloads\private-key.pem" -N -L 8001:127.0.0.1:8000 username@linuxone-host
+```
 
-## Git safety
+Keep that window open. In a second PowerShell window, from the project folder:
 
-`.env`, private key files, virtual environments, and CSV files are ignored. Keep real credentials out of Git. The model artifact is included because the API needs it to predict.
+```powershell
+.\.venv\Scripts\Activate.ps1
+$env:BUTTERFLY_API_URL = "http://127.0.0.1:8001"
+python -m pip install -r frontend/requirements.txt
+python -m streamlit run frontend/app.py
+```
+
+An SSH tunnel is private to the computer that opened it. Your friends need their own LinuxONE account/access and key to use this option. Otherwise, use the fully local setup above.
+
+## Notes about predictions and data
+
+- The saved model was exported with scikit-learn 1.9.0. Keep the serving scikit-learn version aligned with the one used to export the model. The supplied LinuxONE system package was scikit-learn 1.4.1.post1; it loaded the model and returned a smoke-test prediction with compatibility warnings. Re-export the model with the LinuxONE version or arrange a matching runtime before relying on it for deployment.
+- The supplied 25-area CSV labels its rows as **synthetic** and illustrative. The map and sample values are useful for a prototype demonstration, not verified Bengaluru measurements.
+- The dashboard sends baseline and changed feature rows to `POST /predict`. Its displayed ripple is the notebook's signed network response to the prediction difference; it is a conceptual relationship, not proof of causation.
+- Supabase scenario routes need `SUPABASE_URL` and `SUPABASE_KEY` in a local `.env`. The prediction dashboard does not need Supabase credentials. Never commit real secrets or private SSH keys.
+
+## More details
+
+- [Frontend guide](frontend/README.md)
+- [LinuxONE dependency list](requirements-linuxone.txt)
